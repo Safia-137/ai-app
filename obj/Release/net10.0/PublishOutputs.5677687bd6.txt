@@ -1,0 +1,5 @@
+C:\Users\97150\my-app\MyApp\out\MyApp.exe
+C:\Users\97150\my-app\MyApp\out\MyApp.dll
+C:\Users\97150\my-app\MyApp\out\MyApp.deps.json
+C:\Users\97150\my-app\MyApp\out\MyApp.runtimeconfig.json
+C:\Users\97150\my-app\MyApp\out\MyApp.pdb
