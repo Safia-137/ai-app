@@ -11,6 +11,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    # .NET setup
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
@@ -25,12 +26,7 @@ jobs:
     - name: Test
       run: dotnet test --no-build
 
-    # Install Azure CLI
-    - name: Install Azure CLI
-      run: |
-        curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-
-    # Login to Azure Container Registry
+    # Login to ACR
     - name: Login to ACR
       run: |
         echo "AmARxkvYkj2d4F383LMahYFaSsgVKtOZ4QBp8CxvJNvFRmAPBUydJQQJ99CDACGhslBEqg7NAAACAZCRAGF1" \
@@ -38,6 +34,7 @@ jobs:
         -u myregistry1703 \
         --password-stdin
 
+    # Build & push Docker image
     - name: Build Docker image
       run: docker build -t ai-app:latest .
 
@@ -47,21 +44,36 @@ jobs:
     - name: Push image
       run: docker push myregistry1703.azurecr.io/ai-app:latest
 
+    # Azure login (Service Principal)
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: |
+          {
+            "clientId": "dc0ccc03-8301-4fb7-9074-89592e0d6fb1",
+            "clientSecret": "Lec8Q~ce.oZp3uMW9SjqqjysGKEBnGWKUFjbQcQ1",
+            "tenantId": "4a580e05-5259-4e06-bcb6-5b040159d260",
+            "subscriptionId": "0235e7b2-ec98-4edb-b51d-aa3b1dd467b9"
+          }
+
+    # Deploy to Azure
     - name: Deploy to Azure
       run: |
-        az login --service-principal \
-          -u dc0ccc03-8301-4fb7-9074-89592e0d6fb1 \
-          -p Lec8Q~ce.oZp3uMW9SjqqjysGKEBnGWKUFjbQcQ1 \
-          --tenant 4a580e05-5259-4e06-bcb6-5b040159d260
-
         az containerapp update \
           --name my-ai-app \
           --resource-group MyResourceGroup \
           --image myregistry1703.azurecr.io/ai-app:latest
 
+    # Wait for deployment
+    - name: Wait for app startup
+      run: sleep 30
+
+    # Health check (FIXED with your real URL)
     - name: Health Check
       run: |
-        STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://my-ai-app.azurecontainerapps.io/health)
+        STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://my-ai-app.victoriousrock-15f79189.centralindia.azurecontainerapps.io)
+        echo "HTTP Status: $STATUS"
+
         if [ "$STATUS" -ne 200 ]; then
           echo "Deployment failed, rolling back"
           az containerapp revision set-active \
