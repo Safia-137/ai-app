@@ -50,8 +50,8 @@ jobs:
     - name: Deploy to Azure
       run: |
         az login --service-principal \
-          -u e3847b51-6f40-4576-adba-d48ee8d3d00b \
-          -p i8z8Q~.RUpaRNuoYRw2oMxzYdv0tZvYx5xiJZbKO \
+          -u dc0ccc03-8301-4fb7-9074-89592e0d6fb1 \
+          -p Lec8Q~ce.oZp3uMW9SjqqjysGKEBnGWKUFjbQcQ1 \
           --tenant 4a580e05-5259-4e06-bcb6-5b040159d260
 
         az containerapp update \
