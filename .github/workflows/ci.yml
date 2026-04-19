@@ -5,7 +5,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-test:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,9 +25,18 @@ jobs:
     - name: Test
       run: dotnet test --no-build
 
-    # Login to ACR (REQUIRED)
+    # Install Azure CLI
+    - name: Install Azure CLI
+      run: |
+        curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+    # Login to Azure Container Registry
     - name: Login to ACR
-      run: echo "YOUR_ACR_PASSWORD" | docker login myregistry1703.azurecr.io -u YOUR_ACR_USERNAME --password-stdin
+      run: |
+        echo "AmARxkvYkj2d4F383LMahYFaSsgVKtOZ4QBp8CxvJNvFRmAPBUydJQQJ99CDACGhslBEqg7NAAACAZCRAGF1" \
+        | docker login myregistry1703.azurecr.io \
+        -u myregistry1703 \
+        --password-stdin
 
     - name: Build Docker image
       run: docker build -t ai-app:latest .
@@ -47,7 +56,7 @@ jobs:
 
         az containerapp update \
           --name my-ai-app \
-          --resource-group my-resource-group \
+          --resource-group MyResourceGroup \
           --image myregistry1703.azurecr.io/ai-app:latest
 
     - name: Health Check
@@ -57,7 +66,7 @@ jobs:
           echo "Deployment failed, rolling back"
           az containerapp revision set-active \
             --name my-ai-app \
-            --resource-group my-resource-group \
+            --resource-group MyResourceGroup \
             --revision previous
           exit 1
         fi
