@@ -14,7 +14,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '10.0'
+        dotnet-version: '8.0'
 
     - name: Restore dependencies
       run: dotnet restore
@@ -24,3 +24,40 @@ jobs:
 
     - name: Test
       run: dotnet test --no-build
+
+    # Login to ACR (REQUIRED)
+    - name: Login to ACR
+      run: echo "YOUR_ACR_PASSWORD" | docker login myregistry1703.azurecr.io -u YOUR_ACR_USERNAME --password-stdin
+
+    - name: Build Docker image
+      run: docker build -t ai-app:latest .
+
+    - name: Tag image
+      run: docker tag ai-app:latest myregistry1703.azurecr.io/ai-app:latest
+
+    - name: Push image
+      run: docker push myregistry1703.azurecr.io/ai-app:latest
+
+    - name: Deploy to Azure
+      run: |
+        az login --service-principal \
+          -u e3847b51-6f40-4576-adba-d48ee8d3d00b \
+          -p i8z8Q~.RUpaRNuoYRw2oMxzYdv0tZvYx5xiJZbKO \
+          --tenant 4a580e05-5259-4e06-bcb6-5b040159d260
+
+        az containerapp update \
+          --name my-ai-app \
+          --resource-group my-resource-group \
+          --image myregistry1703.azurecr.io/ai-app:latest
+
+    - name: Health Check
+      run: |
+        STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://my-ai-app.azurecontainerapps.io/health)
+        if [ "$STATUS" -ne 200 ]; then
+          echo "Deployment failed, rolling back"
+          az containerapp revision set-active \
+            --name my-ai-app \
+            --resource-group my-resource-group \
+            --revision previous
+          exit 1
+        fi
